@@ -240,6 +240,30 @@ var wantMonitors = []monitorI{
 }
 
 func TestMonitor_JSON_mapstructure(t *testing.T) {
+	if got := decodeMonitorsJSONByMapstructure(t); !reflect.DeepEqual(got, wantMonitors) {
+		t.Errorf("fail to get correct data: diff: (-got +want)\n%v", pretty.Compare(got, wantMonitors))
+	}
+}
+
+func TestMonitor_JSON_rawmessage(t *testing.T) {
+	if got := decodeMonitorsJSONByRawMessage(t); !reflect.DeepEqual(got, wantMonitors) {
+		t.Errorf("fail to get correct data: diff: (-got +want)\n%v", pretty.Compare(got, wantMonitors))
+	}
+}
+
+func BenchmarkMonitor_JSON_mapstructure(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		decodeMonitorsJSONByMapstructure(b)
+	}
+}
+
+func BenchmarkMonitor_JSON_rawmessage(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		decodeMonitorsJSONByRawMessage(b)
+	}
+}
+
+func decodeMonitorsJSONByMapstructure(t testing.TB) []monitorI {
 	var data struct {
 		Monitors []map[string]interface{} `json:"monitors"`
 	}
@@ -254,12 +278,10 @@ func TestMonitor_JSON_mapstructure(t *testing.T) {
 		}
 		ms = append(ms, m)
 	}
-	if !reflect.DeepEqual(ms, wantMonitors) {
-		t.Errorf("fail to get correct data: diff: (-got +want)\n%v", pretty.Compare(ms, wantMonitors))
-	}
+	return ms
 }
 
-func TestMonitor_JSON_unmarshal_twice(t *testing.T) {
+func decodeMonitorsJSONByRawMessage(t testing.TB) []monitorI {
 	var data struct {
 		Monitors []json.RawMessage `json:"monitors"`
 	}
@@ -274,7 +296,5 @@ func TestMonitor_JSON_unmarshal_twice(t *testing.T) {
 		}
 		ms = append(ms, m)
 	}
-	if !reflect.DeepEqual(ms, wantMonitors) {
-		t.Errorf("fail to get correct data: diff: (-got +want)\n%v", pretty.Compare(ms, wantMonitors))
-	}
+	return ms
 }
