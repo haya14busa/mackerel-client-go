@@ -258,3 +258,23 @@ func TestMonitor_JSON_mapstructure(t *testing.T) {
 		t.Errorf("fail to get correct data: diff: (-got +want)\n%v", pretty.Compare(ms, wantMonitors))
 	}
 }
+
+func TestMonitor_JSON_unmarshal_twice(t *testing.T) {
+	var data struct {
+		Monitors []json.RawMessage `json:"monitors"`
+	}
+	if err := json.NewDecoder(strings.NewReader(monitorsjson)).Decode(&data); err != nil {
+		t.Error(err)
+	}
+	ms := make([]monitorI, 0, len(data.Monitors))
+	for _, rawmes := range data.Monitors {
+		m, err := decodeMonitorFromRawMessage(rawmes)
+		if err != nil {
+			t.Error(err)
+		}
+		ms = append(ms, m)
+	}
+	if !reflect.DeepEqual(ms, wantMonitors) {
+		t.Errorf("fail to get correct data: diff: (-got +want)\n%v", pretty.Compare(ms, wantMonitors))
+	}
+}

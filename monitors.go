@@ -334,3 +334,29 @@ func decodeMonitorFromMap(mmap map[string]interface{}) (monitorI, error) {
 	}
 	return m, nil
 }
+
+func decodeMonitorFromRawMessage(rawmes []byte) (monitorI, error) {
+	var typeData struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(rawmes, &typeData); err != nil {
+		return nil, err
+	}
+	var m monitorI
+	switch typeData.Type {
+	case monitorTypeConnectivity:
+		m = &MonitorConnectivity{}
+	case monitorTypeHostMeric:
+		m = &MonitorHostMetric{}
+	case monitorTypeServiceMetric:
+		m = &MonitorServiceMetric{}
+	case monitorTypeExternalHTTP:
+		m = &MonitorExternalHTTP{}
+	case monitorTypeExpression:
+		m = &MonitorExpression{}
+	}
+	if err := json.Unmarshal(rawmes, m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
