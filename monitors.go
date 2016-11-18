@@ -2,8 +2,11 @@ package mackerel
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 /*
@@ -297,4 +300,37 @@ func (c *Client) DeleteMonitor(monitorID string) (*Monitor, error) {
 		return nil, err
 	}
 	return &data, nil
+}
+
+// decodeMonitorFromMap decodes map[string]interface{} to monitorI.
+func decodeMonitorFromMap(mmap map[string]interface{}) (monitorI, error) {
+	typ, ok := mmap["type"]
+	if !ok {
+		return nil, errors.New("`type` field not found")
+	}
+	var m monitorI
+	switch typ {
+	case monitorTypeConnectivity:
+		m = &MonitorConnectivity{}
+	case monitorTypeHostMeric:
+		m = &MonitorHostMetric{}
+	case monitorTypeServiceMetric:
+		m = &MonitorServiceMetric{}
+	case monitorTypeExternalHTTP:
+		m = &MonitorExternalHTTP{}
+	case monitorTypeExpression:
+		m = &MonitorExpression{}
+	}
+	c := &mapstructure.DecoderConfig{
+		TagName: "json",
+		Result:  m,
+	}
+	d, err := mapstructure.NewDecoder(c)
+	if err != nil {
+		return nil, err
+	}
+	if err := d.Decode(mmap); err != nil {
+		return nil, err
+	}
+	return m, nil
 }
